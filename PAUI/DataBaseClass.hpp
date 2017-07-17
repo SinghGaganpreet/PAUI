@@ -13,6 +13,7 @@
 #include "ECG.hpp"
 #include "EEG.hpp"
 #include "EMG.hpp"
+#include "EDA.hpp"
 #include "CAM.hpp"
 #include "FixationDataClass.hpp"
 #include "WriteToFile.hpp"
@@ -21,7 +22,8 @@ class DBC
 {
 public:
 	static DBC* Instance();
-	
+	DTF* dtfObj;
+
 	// ECG data -----------
 	struct ecgStruct
 	{
@@ -82,6 +84,13 @@ public:
 
 	inline void displayData()
 	{		
+		if (dtfObj == nullptr)
+		{
+			dtfObj = new DTF();
+			string str = "HR;RMSSD;SDNN;LF;HF;SVB;SCL;SCR;SD;PEAKS;PLAINS;Alpha;Beta;Theta;Engagement\n";
+			dtfObj->writeData(str, fileToWriteProcessed);
+		}
+		string str = "";
 		for (dataBaseIterator = dataBaseMap.begin(); dataBaseIterator != dataBaseMap.end(); dataBaseIterator++)
 		{
 			
@@ -89,6 +98,15 @@ public:
 				dataBaseStruct dbsObject = dataBaseIterator->second;
 				printf("HR    : %0.2f  RMSSD  : %0.2f \n", dbsObject.ecgData._heartRate, dbsObject.ecgData._RMSSD);
 				printf("PeakT : %d  PlainT : %d \n", dbsObject.emgData.totalPeakTime, dbsObject.emgData.totalPlainTime);
+
+				str = to_string(dbsObject.ecgData._heartRate) + ";" + to_string(dbsObject.ecgData._RMSSD*1000.0) + ";" + to_string(dbsObject.ecgData._SDNN*1000.0)
+					+ ";" + to_string(dbsObject.ecgData._LF*10000.0) + ";" + to_string(dbsObject.ecgData._HF*10000.0) + ";" + to_string(dbsObject.ecgData._SVB*1000.0)
+					+ ";" + to_string(dbsObject.edaData._SCL) + ";" + to_string(dbsObject.edaData._SCR) + ";" + to_string(dbsObject.edaData._SD)
+					+ ";" + to_string(dbsObject.emgData.numOfPeaks) + ";" + to_string(dbsObject.emgData.numOfPlains) + ";" + to_string(dbsObject.eegData.alpha) 
+					+ ";" + to_string(dbsObject.eegData.beta) + ";" + to_string(dbsObject.eegData.theta) + ";" + to_string(dbsObject.eegData.engagement) +"\n";
+
+				dtfObj->writeData(str, fileToWriteProcessed);
+
 
 				std::map<std::string, FDC::fixationStruct*>::iterator fixationMapIterator = dbsObject.fixationMapData.begin();
 
@@ -163,6 +181,13 @@ public:
 		dbsObj.eegData.theta		= obj.theta;
 	}
 
+	void addEDA(EDA obj)
+	{
+		dbsObj.edaData._SCL = obj._SCL;
+		dbsObj.edaData._SCR = obj._SCR;
+		dbsObj.edaData._SD	= obj._SD;
+	}
+
 	void addEYE(FDC obj)
 	{
 		dbsObj.fixationMapData	= obj.fixationMap;
@@ -184,8 +209,8 @@ public:
 		string timeStamp = to_string(std::chrono::duration_cast<std::chrono::milliseconds>(current - startClock).count());
 
 		dataBaseMap.insert(std::pair<std::string, DBC::dataBaseStruct>(timeStamp, dbsObj));
-		displayData();
-		//dataBaseMap.erase(timeStamp); // erasing 
+		//displayData();
+		dataBaseMap.erase(timeStamp); // erasing 
 	}
 
 	/*inline void cleanDataBaseStruct()

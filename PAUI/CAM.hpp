@@ -55,7 +55,7 @@ public:
 	std::map<FaceId, Face> _faces;
 
 	static CAM* Instance();
-	int processCAM(int argsc, char ** argsv, bool displayCam, string fileToWriteCAM, const std::chrono::steady_clock::time_point startClock);
+	int processCAM(int argsc, char ** argsv, bool displayCam, char* fileToWriteCAM, const std::chrono::steady_clock::time_point startClock);
 	
 };
 

@@ -43,7 +43,7 @@ void EMG::processEMGSignal(double frame[])
 	#if DISPLAY_GRAPH == 1
 		graphObj = OGLGraph::Instance();
 	#endif
-	int j = 10, k = 200;
+	int j = 20;
 	for (int i = 2; i < frameLength - 2; i += 1)
 	{
 		_signalArray[0] = (float)frame[i - 2];
@@ -54,13 +54,14 @@ void EMG::processEMGSignal(double frame[])
 
 		processingBlock();
 
-		//if (i == j)
-		//{
 		#if DISPLAY_GRAPH == 1
-				graphObj->drawEMG(_listSignal, _pEMGList, _meanEMGList, _pEMG150List);
+			if (i == j)
+			{
+					graphObj->drawEMG(_listSignal, _pEMGList, _meanEMGList, _pEMG150List);
+				j = j + 20;
+			}
 		#endif
-			//j = j + 10;
-		//}*/
+
 	}
 	firstTime = false;
 }

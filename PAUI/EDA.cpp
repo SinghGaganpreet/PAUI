@@ -54,27 +54,30 @@ void EDA::processEDASignal(BITalino::VFrame frame)
 }
 
 // HR, RRI, Delta Mean, and Delta Standard deviation calculation from File
-void EDA::processEDASignal(float frame[])
+void EDA::processEDASignal(double frame[])
 {
-	int n = 100; // Length of heartrate array
-	float sum = 0;
-
-	for (int i = 0; i < n; i++)
+	#if DISPLAY_GRAPH == 1
+		graphObj = OGLGraph::Instance();
+	#endif
+	
+	int j = 20;
+	for (int i = 0; i < frameLength; i++)
 	{
 		float signal = frame[i];
-		if (firstTime)
+		if (_sclList.size() < 1000)
 		{
 			sum += signal;
 			frameCounter++;
 			movingAverage = sum / frameCounter;
 			_sclList.push_back(movingAverage);
+			_listSignal.push_back(signal);
 		}
 		else
 		{
 			_iterUniversal = _listSignal.begin();
 			sum -= *_iterUniversal;
 			sum += signal;
-			movingAverage = sum / n;
+			movingAverage = sum / frameCounter;
 
 			_sclList.pop_front();
 			_listSignal.pop_front();
@@ -83,14 +86,23 @@ void EDA::processEDASignal(float frame[])
 			_listSignal.push_back(signal);
 		}
 
-		if (signal > movingAverage * 1.5f)
+		if (signal > movingAverage * 1.012f)
 		{
 			_SCR = signal;
-			_SD = _SCR - movingAverage;
+			_SCL = movingAverage;
+			_SD  = _SCR - _SCL;
 
 			m_peakTimer = 0;
 		}
 		m_peakTimer += 1.0f / (float)samplingFrequency;
+
+		#if DISPLAY_GRAPH == 1
+			if (i == j)
+			{
+				graphObj->drawEDA(_listSignal, _sclList);
+				j = j + 20;
+			}
+		#endif
 	}
 	firstTime = false;
 

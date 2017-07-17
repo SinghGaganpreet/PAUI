@@ -15,7 +15,7 @@ using namespace std;
 #define VISULIZE_FIXATION_DATA 0;
 
 
-
+char ftwe[100];
 
 class FDC
 {
@@ -26,7 +26,11 @@ private:
 		{
 			dtfObj = new DTF();
 			string data = "#TimeStamp(in miliSec);avgFixationDuration;biggestFixationAt;biggestFixationDuration;maxVisitedAt;maxVisitsCount;numberOfFixations;repeatedFixations;totalFixationDuration;totalTime\n";
-			dtfObj->writeData(data, fileToWriteEYE);
+
+			time_t now = time(0);
+			tm *ltm = localtime(&now);
+			sprintf(ftwe, "%s%d.%d.%d-%d.%d.%d.txt", fileToWriteEYE, ltm->tm_mday, ltm->tm_mon + 1, ltm->tm_year + 1900, ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+			dtfObj->writeData(data, ftwe);
 		}
 		else
 		{
@@ -35,7 +39,7 @@ private:
 				+ ";" + to_string(gdsObj.biggestFixationDuration) + ";" + gdsObj.maxVisitedAt + ";" + to_string(gdsObj.maxVisitsCount) + ";" + to_string(gdsObj.numberOfFixations)
 				+ ";" + to_string(gdsObj.repeatedFixations) + ";" + to_string(gdsObj.totalFixationDuration) + ";" + gdsObj.totalTime + "\n";
 
-			dtfObj->writeData(data, fileToWriteEYE);
+			dtfObj->writeData(data, ftwe);
 		}
 	}
 

@@ -30,7 +30,7 @@ OGLGraph* OGLGraph::Instance()
 }
 
 void OGLGraph::setup( int width, int height, int offsetX, int offsetY, 
-				 int scaleX, int scaleY, int channels, int cacheSize, int ecgId, int emgId, int eegId )
+				 int scaleX, int scaleY, int channels, int cacheSize, int ecgId, int emgId, int eegId, int edaId )
 {
 	_offsetX = offsetX;
 	_offsetY = offsetY;
@@ -43,6 +43,7 @@ void OGLGraph::setup( int width, int height, int offsetX, int offsetY,
 	_ecgId = ecgId;
 	_emgId = emgId;
 	_eegId = eegId;
+	_edaId = edaId;
 }
 
 //--While reading from file line by line
@@ -127,58 +128,58 @@ void OGLGraph::update(BITalino::VFrame f, int index)
 	}
 }
 
-void OGLGraph::update(float point, float thresh, int rriFound, float HR, float RRI, float SDNN, float RMSSD, float LF, float HF, float SVB)
-{
-	glutSetWindow(_ecgId);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(60.0, (float)800 / (float)600, 0.1, 100.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	// This is a dummy function. Replace with custom input/data
-	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-	if (_data2.size() > (unsigned int)(_cacheSize))
-	{
-		_data2.pop_front();
-		//_thresh.pop_front();
-		//_rriFoundList.pop_front();
-		//_hrList.pop_front();
-		////_rriList.pop_front();
-		//_sdnnList.pop_front();
-		//_rmssdList.pop_front();
-		//_lfList.pop_front();
-		//_hfList.pop_front();
-		//_svbList.pop_front();
-
-		_data2.push_back(point);
-		//_thresh.push_back(thresh);
-		//_rriFoundList.push_back(rriFound);
-		//_hrList.push_back(HR);
-		////_rriList.push_back(RRI);
-		//_sdnnList.push_back(SDNN);
-		//_rmssdList.push_back(RMSSD);
-		//_lfList.push_back(LF);
-		//_hfList.push_back(HF);
-		//_svbList.push_back(SVB);
-	}
-	else
-	{
-		_data2.push_back(point);
-		//_thresh.push_back(thresh);
-		//_rriFoundList.push_back(rriFound);
-		//_hrList.push_back(HR);
-		////_rriList.push_back(RRI);
-		//_sdnnList.push_back(SDNN);
-		//_rmssdList.push_back(RMSSD);
-		//_lfList.push_back(LF);
-		//_hfList.push_back(HF);
-		//_svbList.push_back(SVB);
-	}
-	//draw();
-	draw2();
-	glutSwapBuffers();
-}
+//void OGLGraph::update(float point, float thresh, int rriFound, float HR, float RRI, float SDNN, float RMSSD, float LF, float HF, float SVB)
+//{
+//	glutSetWindow(_ecgId);
+//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//	glMatrixMode(GL_PROJECTION);
+//	glLoadIdentity();
+//	gluPerspective(60.0, (float)800 / (float)600, 0.1, 100.0);
+//	glMatrixMode(GL_MODELVIEW);
+//	glLoadIdentity();
+//	// This is a dummy function. Replace with custom input/data
+//	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+//	if (_data2.size() > (unsigned int)(_cacheSize))
+//	{
+//		_data2.pop_front();
+//		//_thresh.pop_front();
+//		//_rriFoundList.pop_front();
+//		//_hrList.pop_front();
+//		////_rriList.pop_front();
+//		//_sdnnList.pop_front();
+//		//_rmssdList.pop_front();
+//		//_lfList.pop_front();
+//		//_hfList.pop_front();
+//		//_svbList.pop_front();
+//
+//		_data2.push_back(point);
+//		//_thresh.push_back(thresh);
+//		//_rriFoundList.push_back(rriFound);
+//		//_hrList.push_back(HR);
+//		////_rriList.push_back(RRI);
+//		//_sdnnList.push_back(SDNN);
+//		//_rmssdList.push_back(RMSSD);
+//		//_lfList.push_back(LF);
+//		//_hfList.push_back(HF);
+//		//_svbList.push_back(SVB);
+//	}
+//	else
+//	{
+//		_data2.push_back(point);
+//		//_thresh.push_back(thresh);
+//		//_rriFoundList.push_back(rriFound);
+//		//_hrList.push_back(HR);
+//		////_rriList.push_back(RRI);
+//		//_sdnnList.push_back(SDNN);
+//		//_rmssdList.push_back(RMSSD);
+//		//_lfList.push_back(LF);
+//		//_hfList.push_back(HF);
+//		//_svbList.push_back(SVB);
+//	}
+//	//draw();
+//	draw2();
+//	glutSwapBuffers();
+//}
 
 //void OGLGraph::updateEMG(float oEMG, float pEMG, float mean, float pEMG150)
 //{
@@ -280,8 +281,20 @@ void OGLGraph::draw()
 	//glEnd();
 }
 
-inline void OGLGraph::draw2()
+void OGLGraph::drawECG(std::list<float> _data2, std::list<float> _thresh, std::list<float> _rriFoundList, std::list<float> _hrList,
+	std::list<float> _rriList, std::list<float> _sdnnList, std::list<float> _rmssdList, std::list<float> _lfList,
+	std::list<float> _hfList, std::list<float> _svbList)
 {
+	glutSetWindow(_ecgId);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(60.0, (float)800 / (float)600, 0.1, 100.0);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		// This is a dummy function. Replace with custom input/data
+		float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+
 	glutSetWindow(_ecgId);
 	int cntX = 0;
 	int cntY = 0;
@@ -422,6 +435,8 @@ inline void OGLGraph::draw2()
 
 #endif
 
+
+	glutSwapBuffers();
 }
 
 void OGLGraph::drawEMG(std::list<float> _oEMGList, std::list<float> _pEMGList, std::list<float> _meanEMGList, std::list<float> _pEMG150List)
@@ -507,4 +522,114 @@ void OGLGraph::drawEMG(std::list<float> _oEMGList, std::list<float> _pEMGList, s
 #endif
 
 	glutSwapBuffers();
+}
+
+void OGLGraph::drawEEG(std::list<float> _eegSignal)
+{
+	glutSetWindow(_eegId);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(60.0, (float)800 / (float)600, 0.1, 100.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+
+	int cntX = 0;
+	int cntY = 0;
+	// Set up the display
+	glMatrixMode(GL_PROJECTION);  //We'll talk about this one more as we go 
+	glLoadIdentity();
+	glOrtho(0, _width, 0, _height, 0, 1.0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	// Draw the axes - OpenGL screen coordinates start from bottom-left (0,0)
+	glDisable(GL_LINE_STIPPLE);
+	glBegin(GL_LINES);
+	glColor3ub(255, 255, 255);	// Green
+								// Draw x-axis
+	glVertex3f(_offsetX, _offsetY, 0);
+	glVertex3f(_width - _offsetX, _offsetY, 0);
+	// Draw y-axis
+	glVertex3f(_offsetX, _offsetY, 0);
+	glVertex3f(_offsetX, _height, 0);
+	glEnd();
+
+	std::list<float>::const_iterator _it;
+
+	// Draw Original EMG data points
+	glBegin(GL_LINE_STRIP);
+	glColor3ub(0, 255, 0);	// Green
+	for (_it = _eegSignal.begin(); _it != _eegSignal.end(); _it++)
+	{
+		//double scaled = (*_iterData);// +200.0) / 2;
+		glVertex3f(10 + (cntX*_scaleX), (*_it * 1), 0); // (10 + (*_iterData))*_scaleY, 0 );
+		cntX++;
+	}
+	glEnd();
+
+	glutSwapBuffers();
+}
+
+void OGLGraph::drawEDA(std::list<float> _listSignal, std::list<float> _sclList)
+{
+	glutSetWindow(_edaId);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(60.0, (float)800 / (float)600, 0.1, 100.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+
+	int cntX = 0;
+	int cntY = 0;
+	// Set up the display
+	glMatrixMode(GL_PROJECTION);  //We'll talk about this one more as we go 
+	glLoadIdentity();
+	glOrtho(0, _width, 0, _height, 0, 1.0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	// Draw the axes - OpenGL screen coordinates start from bottom-left (0,0)
+	glDisable(GL_LINE_STIPPLE);
+	glBegin(GL_LINES);
+	glColor3ub(255, 255, 255);	// Green
+								// Draw x-axis
+	glVertex3f(_offsetX, _offsetY, 0);
+	glVertex3f(_width - _offsetX, _offsetY, 0);
+	// Draw y-axis
+	glVertex3f(_offsetX, _offsetY, 0);
+	glVertex3f(_offsetX, _height, 0);
+	glEnd();
+
+	std::list<float>::const_iterator _it;
+
+	// Draw Original EMG data points
+	glBegin(GL_LINE_STRIP);
+	glColor3ub(0, 255, 0);	// Green
+	for (_it = _listSignal.begin(); _it != _listSignal.end(); _it++)
+	{
+		//double scaled = (*_iterData);// +200.0) / 2;
+		glVertex3f(10 + (cntX*_scaleX), (*_it * 1), 0); // (10 + (*_iterData))*_scaleY, 0 );
+		cntX++;
+	}
+	glEnd();
+
+	cntX = 0;
+	// Draw processed EMG data values
+	glBegin(GL_LINE_STRIP);
+	glColor3ub(255, 0, 0);	// Red
+	for (_it = _sclList.begin(); _it != _sclList.end(); _it++)
+	{
+		glVertex3f(10 + (cntX*_scaleX), (*_it * 1), 0);// (10 + (*_iterMA))*_scaleY, 0);
+		cntX++;
+	}
+	glEnd();
+
+	glutSwapBuffers();
+
 }

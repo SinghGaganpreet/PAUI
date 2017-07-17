@@ -31,7 +31,7 @@ void ECG::processECGSignal(BITalino::VFrame frame)
 
 		//printf("HR: %0.1f RRI: %0.1f SDNN: %0.3f RMSSD: %0.3f LF: %0.4f HF: %0.4f SVB: %0.1f\n", _heartRate, _RRI*1000.0, _SDNN, _RMSSD, _LF, _HF, _LF / _HF);
 		#if DISPLAY_GRAPH == 1
-			graphObj->update((float)F, (float)m_peakThreshold, _rriFound, (float)_heartRate, (float)_RRI, (float)_SDNN, (float)_RMSSD, (float)_LF, (float)_HF, (float)(_LF / _HF));
+			//graphObj->update((float)F, (float)m_peakThreshold, _rriFound, (float)_heartRate, (float)_RRI, (float)_SDNN, (float)_RMSSD, (float)_LF, (float)_HF, (float)(_LF / _HF));
 		#endif	
 	}
 	//finalizingThings();
@@ -43,6 +43,7 @@ void ECG::processECGSignal(double frame[])
 	#if DISPLAY_GRAPH == 1
 		graphObj = OGLGraph::Instance();
 	#endif
+	int j = 20;
 	for (int i = 0; i < frameLength; i++)
 	{
 		double signal = frame[i];
@@ -60,7 +61,49 @@ void ECG::processECGSignal(double frame[])
 
 		//printf("HR: %0.1f RRI: %0.1f SDNN: %0.3f RMSSD: %0.3f LF: %0.4f HF: %0.4f SVB: %0.1f\n", _heartRate, _RRI*1000.0, _SDNN, _RMSSD, _LF, _HF, _LF/_HF);
 		#if DISPLAY_GRAPH == 1
-				graphObj->update((float)F, (float)m_peakThreshold, _rriFound, (float)_heartRate, (float)_RRI, (float)_SDNN, (float)_RMSSD, (float)_LF, (float)_HF, (float)(_LF / _HF));
+			if ((int)_data2.size() >= 1000)
+			{
+				_data2.pop_front();
+				_thresh.pop_front();
+				_rriFoundList.pop_front();
+				_hrList.pop_front();
+				_rriList.pop_front();
+				_sdnnList.pop_front();
+				_rmssdList.pop_front();
+				_lfList.pop_front();
+				_hfList.pop_front();
+				_svbList.pop_front();
+
+				_data2.push_back(F);
+				_thresh.push_back(m_peakThreshold);
+				_rriFoundList.push_back(_rriFound);
+				_hrList.push_back(_heartRate);
+				_rriList.push_back(_RRI);
+				_sdnnList.push_back(_SDNN);
+				_rmssdList.push_back(_RMSSD);
+				_lfList.push_back(_LF);
+				_hfList.push_back(_HF);
+				_svbList.push_back((float)(_LF / _HF));
+			}
+			else
+			{
+				_data2.push_back(F);
+				_thresh.push_back(m_peakThreshold);
+				_rriFoundList.push_back(_rriFound);
+				_hrList.push_back(_heartRate);
+				_rriList.push_back(_RRI);
+				_sdnnList.push_back(_SDNN);
+				_rmssdList.push_back(_RMSSD);
+				_lfList.push_back(_LF);
+				_hfList.push_back(_HF);
+				_svbList.push_back((float)(_LF / _HF));
+			}
+			if (i == j)
+			{
+				graphObj->drawECG(_data2, _thresh, _rriFoundList, _hrList, _rriList, _sdnnList, _rmssdList, _lfList, _hfList, _svbList);
+				j = j + 20;
+			}
+				//graphObj->update((float)F, (float)m_peakThreshold, _rriFound, (float)_heartRate, (float)_RRI, (float)_SDNN, (float)_RMSSD, (float)_LF, (float)_HF, (float)(_LF / _HF));
 		#endif	
 	}
 	//finalizingThings();

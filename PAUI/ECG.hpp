@@ -24,6 +24,7 @@ private:
 	int _rriFound = 0;
 
 	std::list<double> arrayRRIForTimeDomain, arrayRRIForFrequencyDomain;
+	std::list<float> _data2, _thresh, _rriFoundList, _hrList, _rriList, _sdnnList, _rmssdList, _lfList, _hfList, _svbList;
 	double _preRRI = 0;
 
 public:

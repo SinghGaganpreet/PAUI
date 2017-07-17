@@ -16,13 +16,18 @@ CAM* CAM::Instance()
 /// <summary>
 /// Project for demoing the Windows SDK CameraDetector class (grabbing and processing frames from the camera).
 /// </summary>
-int CAM::processCAM(int argsc, char ** argsv, bool displayCam, string fileToWriteCAM, const std::chrono::steady_clock::time_point startClock)
+int CAM::processCAM(int argsc, char ** argsv, bool displayCam, char* fileToWriteCAM, const std::chrono::steady_clock::time_point startClock)
 {
 	// Initializing File writer ----------------
 	dtfObj = new DTF();
 	string data = "#TimeStamp(in microSec);Age;Anger;Contempt;Disgust;Engagement;Fear;Joy;Sadness;Surprise;Valence;Attention;Browfurrow;BrowRaise;Cheekraise;Chinraise;Dimpler;Eyeclosure;Eyewiden;InnerBrowraise;"
 				"Jawdrop;Lidtighten;Lipcornerdepressor;Lippress;Lippucker;Lipstretch;Lipsuck;Mouthopen;Nosewrinkle;Smile;Smirk;Upperlipraise;Pitch;Roll;Yaw;Id\n";
-	dtfObj->writeData(data, fileToWriteCAM);
+	
+	time_t now = time(0);	
+	tm *ltm = localtime(&now);
+	char ftwc[100];
+	sprintf(ftwc, "%s%d.%d.%d-%d.%d.%d.txt", fileToWriteCAM, ltm->tm_mday, ltm->tm_mon + 1, ltm->tm_year + 1900, ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+	dtfObj->writeData(data, ftwc);
 	// --------------------------
 
 	namespace po = boost::program_options; // abbreviate namespace
@@ -185,7 +190,7 @@ int CAM::processCAM(int argsc, char ** argsv, bool displayCam, string fileToWrit
 							+ ";" + std::to_string(f.expressions.mouthOpen) + ";" + std::to_string(f.expressions.noseWrinkle) + ";" + std::to_string(f.expressions.smile) + ";" + std::to_string(f.expressions.smirk)
 							+ ";" + std::to_string(f.expressions.upperLipRaise) + ";" + std::to_string(f.measurements.orientation.pitch) + ";" + std::to_string(f.measurements.orientation.roll)
 							+ ";" + std::to_string(f.measurements.orientation.yaw) + ";" + std::to_string(f.id) + "\n";
-						dtfObj->writeData(date2, fileToWriteCAM);
+						dtfObj->writeData(date2, ftwc);
 						break;	// Currently writing data for only one face
 					}
 				}

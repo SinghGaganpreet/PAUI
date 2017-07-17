@@ -2,13 +2,13 @@
 #ifndef EDA_HPP
 #define EDA_HPP
 
-#include "bitalino.h"
-#include <List>
+#include "OGLGraph.h"
 #include "stdafx.h"
 
 class EDA
 {
 private:
+	OGLGraph* graphObj;
 	static EDA* _instance;
 	std::list<float> _listSignal;
 	std::list<float> _sclList;
@@ -17,8 +17,12 @@ private:
 	bool firstTime = true;
 
 
-	int frameCounter = 0, samplingFrequency = 1000;
-	float movingAverage = 0, m_peakTimer = 0;
+	int frameCounter		= 0; 
+	int samplingFrequency	= 1000;
+	
+	float sum				= 0;
+	float movingAverage		= 0;
+	float m_peakTimer		= 0;
 
 public:
 	float _SCR = 0.0, _SD = 0.0, _SCL = 0.0;
@@ -26,7 +30,7 @@ public:
 	float displayThreshold = 0;
 	static EDA* Instance();
 	void processEDASignal(BITalino::VFrame);
-	void processEDASignal(float frame[]);
+	void processEDASignal(double frame[]);
 };
 
 #endif

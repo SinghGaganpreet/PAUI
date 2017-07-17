@@ -51,6 +51,7 @@ BITalino dev;
 static int frameCounter = 0;
 static float emgRatio = 96.0;
 int gwECG, gwEMG, gwEEG, gwEDA;
+char ftwb[100];
 
 bool errorDisplayed = false;	// Stop displaying end of file error after displaying once
 bool doProcessing	= true;
@@ -58,6 +59,7 @@ bool doProcessing	= true;
 double ecgfromFile[frameLength];
 double emgfromFile[frameLength];
 double eegfromFile[frameLength];
+double edafromFile[frameLength];
 
 // ###################################################################### //
 // ################# Initialization fuction for objects ################# //
@@ -82,12 +84,16 @@ inline void initialize()
 		camObj = CAM::Instance();	// Object of CAM
 	#endif	
 	#if TOBII == 1
-		fdcObj = FDC::Instance();	// Object of FixationdataClass
+		fdcObj = FDC::Instance();	// Object of FixationDataClass
 	#endif // TOBII == 1
 	#if RECORD_BITALINO == 1
 		dtfObj = new DTF();
-		string str = "#TimeStamp(in miliSec);analog0;analog1;analog2;analog3;analog4;analog5;digital0;digital1;digital2;digital3\n";
-		dtfObj->writeData(str, fileToWriteEYE);
+		string str = "#TimeStamp(in miliSec);analog0;analog1;analog2;analog3;analog4;analog5;digital0;digital1;digital2;digital3;Stress;Workload;State\n";
+
+		time_t now = time(0);
+		tm *ltm = localtime(&now);
+		sprintf(ftwb, "%s%d.%d.%d-%d.%d.%d.txt", fileToWriteBitalino, ltm->tm_mday, ltm->tm_mon + 1, ltm->tm_year + 1900, ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+		dtfObj->writeData(str, ftwb);
 	#endif
 }
 
@@ -129,6 +135,9 @@ inline std::string readFile()
 #if PROCESS_EEG == 1
 				eegfromFile[frameCounter] = stof(elems[EEG_INDEX]);
 #endif //  PROCESS_EEG == 1
+#if PROCESS_EDA == 1
+				edafromFile[frameCounter] = stof(elems[EDA_INDEX]);
+#endif //  PROCESS_EDA == 1
 				frameCounter++;
 
 			}
@@ -181,6 +190,10 @@ void insertData()
 		#if PROCESS_EEG == 1
 			dbcObj->addEEG(*eegObj);
 		#endif
+			// EEG
+		#if PROCESS_EDA == 1
+			dbcObj->addEDA(*edaObj);
+		#endif
 			// EYE
 		#if TOBII == 1
 			dbcObj->addEYE(*fdcObj);
@@ -232,7 +245,7 @@ inline void pCAM(int argc, char** argv)
 	camObj->processCAM(argc, argv, displayCam, fileToWriteCAM, startClock);
 }
 
-void pBitalino(void)   // Create The Display Function
+void pBitalino(void)   // Bitalino processing block
 {	
 
 	#if DISPLAY_GRAPH == 1
@@ -292,18 +305,21 @@ void pBitalino(void)   // Create The Display Function
 
 	#else	// Else when data is from Bitalino
 			BITalino::VFrame f = GetBitalinoFrames();
-		#if  PROCESS_EMG == 1
-			emgObj->processEMGSignal(f);
-		#endif //  PROCESS_EMG == 1
-		#if PROCESS_ECG == 1
-			ecgObj->processECGSignal(f);
-		#endif // PROCESS_ECG == 1
-		#if PROCESS_EEG == 1
-			eegObj->processEEGSignal(f);
-		#endif // PROCESS_EEG == 1
-		#if PROCESS_EDA == 1
-			edaObj->processEDASignal(f);
-		#endif // PROCESS_EDA == 1
+
+		//#############Commenting the procesing of Bialino objects for now to collect data at faster rate for initial testing. 
+		//############Will do the processing at offline mode########################
+		//#if  PROCESS_EMG == 1
+		//	emgObj->processEMGSignal(f);
+		//#endif //  PROCESS_EMG == 1
+		//#if PROCESS_ECG == 1
+		//	ecgObj->processECGSignal(f);
+		//#endif // PROCESS_ECG == 1
+		//#if PROCESS_EEG == 1
+		//	eegObj->processEEGSignal(f);
+		//#endif // PROCESS_EEG == 1
+		//#if PROCESS_EDA == 1
+		//	edaObj->processEDASignal(f);
+		//#endif // PROCESS_EDA == 1
 
 		#if RECORD_BITALINO == 1
 			for (int i = 0; i < f.size(); i++)
@@ -312,10 +328,15 @@ void pBitalino(void)   // Create The Display Function
 				string str = to_string(std::chrono::duration_cast<std::chrono::milliseconds>(current - startClock).count()) + ";" + to_string(f[i].analog[0]) 
 					+ ";" + to_string(f[i].analog[1]) + ";" + to_string(f[i].analog[2]) + ";" + to_string(f[i].analog[3]) + ";" + to_string(f[i].analog[4]) 
 					+ ";" + to_string(f[i].analog[5]) + ";" + to_string(f[i].digital[0]) + ";" + to_string(f[i].digital[1]) + ";" + to_string(f[i].digital[2]) 
-					+ ";" + to_string(f[i].digital[3]) + "\n";
+					+ ";" + to_string(f[i].digital[3]) + ";" + to_string(stressedStatus) + ";" + to_string(workloadStatus) + ";" + to_string(currentState) + "\n";
 					
-				dtfObj->writeData(str, fileToWriteBitalino);
+				dtfObj->writeData(str, ftwb);
 			}
+			/*if (stressedStatus == 1 || workloadStatus == 1)
+			{
+				stressedStatus = 0;
+				workloadStatus = 0;
+			}*/
 		#endif		
 	#endif
 
@@ -382,7 +403,7 @@ void init(GLvoid)     // Create Some Everyday Functions
 	glClearColor(0.0f, 0.0f, 0.0f, 0.f);				// Black Background
 														//glClearDepth(1.0f);								// Depth Buffer Setup
 	myGraph = OGLGraph::Instance();
-	myGraph->setup(4050, 2000, 10, 10, 4, 6, 1, 1000, gwECG, gwEMG, gwEEG);
+	myGraph->setup(4050, 2000, 10, 10, 4, 6, 1, 1000, gwECG, gwEMG, gwEEG, gwEDA);
 }
 
 bool keypressed(void)
@@ -406,6 +427,12 @@ void keyboard(unsigned char key, int x, int y)  // Create Keyboard Function
 		doProcessing = false;
 		exit(0);   // Exit The Program
 		break;        // Ready For Next Case
+	case 83:
+		stressedStatus = 1;
+		break;
+	case 87:
+		workloadStatus = 1;
+		break;
 	default:        // Now Wrap It Up
 		break;
 	}
@@ -493,22 +520,97 @@ void main(int argc, char** argv)   // Create Main Function For Bringing It All T
 			#endif
 			#if PROCESS_EMG == 1
 				gwEMG = glutCreateWindow("EMG Graph"); // Window Title (argv[0] for current directory as title)
-				glutPositionWindow(540, 40);
+				glutPositionWindow(50, 50);
 				init();
 				glutDisplayFunc(pBitalino);  // Matching Earlier Functions To Their Counterparts
 				glutReshapeFunc(reshapeEMG);
 				glutKeyboardFunc(keyboard);
 			#endif		
+			#if PROCESS_EEG == 1
+				gwEEG = glutCreateWindow("EEG Graph"); // Window Title (argv[0] for current directory as title)
+				glutPositionWindow(100, 100);
+				init();
+				glutDisplayFunc(pBitalino);  // Matching Earlier Functions To Their Counterparts
+				glutReshapeFunc(reshapeEEG);
+				glutKeyboardFunc(keyboard);
+			#endif
+			#if PROCESS_EDA == 1
+				gwEDA = glutCreateWindow("EDA Graph"); // Window Title (argv[0] for current directory as title)
+				glutPositionWindow(150, 150);
+				init();
+				glutDisplayFunc(pBitalino);  // Matching Earlier Functions To Their Counterparts
+				glutReshapeFunc(reshapeEDA);
+				glutKeyboardFunc(keyboard);
+			#endif
 	
 			glutIdleFunc(idle);
 			glutMainLoop();          // Initialize The Main Loop
 		#else
 			std::thread bitalinoThread(pBitalino);
-			bitalinoThread.join();
-			doProcessing = false;
 		#endif
 	#endif
 
+NotEscape:printf("Press Esc key to exit.");
+	char keyPressed = getch();
+	if (keyPressed == 's')
+	{
+		stressedStatus = 1;
+		workloadStatus = 0;
+		printf("Stressed Activated!");
+		goto NotEscape;
+	}
+	else if (keyPressed == 'w')
+	{
+		workloadStatus = 1;	
+		stressedStatus = 0;
+		printf("Workload Activated!");
+		goto NotEscape;
+	}
+	else if (keyPressed == 'b')
+	{
+		workloadStatus = 1;
+		stressedStatus = 1;
+		printf("Both Activated!");
+		goto NotEscape;
+	}
+	else if (keyPressed == 'd')
+	{
+		workloadStatus = 0;
+		stressedStatus = 0;
+		printf("Both Deactivated!");
+		goto NotEscape;
+	}
+	else if (keyPressed == 'r')
+	{
+		currentState = -1;
+		printf("In Resting Phase!");
+		goto NotEscape;
+	}
+	else if (keyPressed == 't')
+	{
+		currentState = 1;
+		printf("In Testing Phase!");
+		goto NotEscape;
+	}
+	else if (keyPressed == 'i')
+	{
+		currentState = 0;
+		printf("In Idle Phase!");
+		goto NotEscape;
+	}
+	else if ((int)keyPressed == 27)
+		doProcessing = false;
+
+	#if DISPLAY_GRAPH == 1
+	#else
+		#if BITALINO == 1
+			bitalinoThread.join();
+		#endif
+	#endif
+
+	#if CAMERA == 1
+		camThread.join();
+	#endif
 
 	// -------------------------------------------------------------------- //
 	// Closing Tobii and waiting for Camera thread to finish processing //
@@ -527,12 +629,6 @@ void main(int argc, char** argv)   // Create Main Function For Bringing It All T
 			printf("EyeX could not be shut down cleanly. Did you remember to release all handles?\n");
 		}
 	#endif	
-
-	#if CAMERA == 1
-		camThread.join();
-	#endif
-
+		
 	processingThread.join();
-
-	getch();
 }

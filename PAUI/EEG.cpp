@@ -36,7 +36,7 @@ void EEG::processEEGSignal(BITalino::VFrame frame)
 	}
 	if (nbrOfInputSamples == _listSignals.size())
 	{
-		//calculatePSD();
+		calculatePSD();
 		for (int i = 0; i < frameLength; i++)
 			_listSignals.pop_front();
 	}
@@ -46,6 +46,9 @@ void EEG::processEEGSignal(BITalino::VFrame frame)
 // HR, RRI, Delta Mean, and Delta Standard deviation calculation from File
 void EEG::processEEGSignal(double frame[])
 {
+	#if DISPLAY_GRAPH == 1
+		graphObj = OGLGraph::Instance();
+	#endif
 	float x[100];
 	float y[100];
 	float yMin = 999.9, yMax = -999.9;
@@ -68,6 +71,7 @@ void EEG::processEEGSignal(double frame[])
 				previousSignal = i == 0 ? 0 : signal;*/
 
 		_listSignals.push_back(F);
+
 		/*
 				x[i] = i;
 				y[i] = F;
@@ -81,6 +85,18 @@ void EEG::processEEGSignal(double frame[])
 			for (int i = 0; i < frameLength; i++)
 				_listSignals.pop_front();
 		}
+
+		#if DISPLAY_GRAPH == 1		
+			if (_signalForDisplay.size() >= 1000)
+			{
+				_signalForDisplay.pop_front();
+				_signalForDisplay.push_back(F);
+			}
+			else
+				_signalForDisplay.push_back(F);
+
+			graphObj->drawEEG(_signalForDisplay);
+		#endif
 	}
 	
 

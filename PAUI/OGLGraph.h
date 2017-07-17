@@ -29,7 +29,7 @@ class OGLGraph
 public:
 	static OGLGraph* Instance();	
 	~OGLGraph() {}
-	void setup(int width, int height, int offsetX, int offsetY, int scaleX, int scaleY, int channels, int cacheSize, int ecgId, int emgId, int eegId);
+	void setup(int width, int height, int offsetX, int offsetY, int scaleX, int scaleY, int channels, int cacheSize, int ecgId, int emgId, int eegId, int edaId);
 	void update( double frame);
 	void update(BITalino::VFrame, int);
 	void update(float point, float thresh, int rriFound, float HR, float RRI, float SDNN, float RMSSD, float LF, float HF, float SVB);
@@ -37,13 +37,18 @@ public:
 	void draw();
 
 	void drawEMG(std::list<float> _oEMGList, std::list<float> _pEMGList, std::list<float> _meanEMGList, std::list<float> _pEMG150List);
+	void drawECG(std::list<float> _data2, std::list<float> _thresh, std::list<float> _rriFoundList, std::list<float> _hrList, 
+		std::list<float> _rriList, std::list<float> _sdnnList, std::list<float> _rmssdList, std::list<float> _lfList, 
+		std::list<float> _hfList, std::list<float> _svbList);
+	void OGLGraph::drawEEG(std::list<float> _eegSignal);
+	void OGLGraph::drawEDA(std::list<float> _listSignal, std::list<float> _sclList);
 protected:
 //	OGLGraph();
 
 private:
-	inline void draw2();
+	/*inline void drawECG();*/
 	static OGLGraph* _instance;
-	int _ecgId, _emgId, _eegId;
+	int _ecgId, _emgId, _eegId, _edaId;
 
 	OGLGraph() {}
 	int _cacheSize;
@@ -52,7 +57,8 @@ private:
 	int _channels;
 	int _scaleX, _scaleY;
 	int _offsetX, _offsetY;
-	std::list<float> _data, _data2, _thresh, _rriFoundList, _hrList, _rriList, _sdnnList, _rmssdList, _lfList, _hfList, _svbList;
+	std::list<float> _data;
+	//std::list<float> _data2, _thresh, _rriFoundList, _hrList, _rriList, _sdnnList, _rmssdList, _lfList, _hfList, _svbList;
 	std::list<float> _movingAverage;
 	std::list<float> _threshold;
 	/*std::list<float>::const_iterator _iterData;*/

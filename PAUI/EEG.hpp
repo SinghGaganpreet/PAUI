@@ -3,9 +3,10 @@
 #ifndef EEG_HPP
 #define EEG_HPP
 
-#include "bitalino.h"
+//#include "bitalino.h"
 #include "fftw3.h"
-#include <List>
+#include "OGLGraph.h"
+//#include <List>
 //#include "discpp.h"	// DISLIN Library for static graphs
 #include <ostream>
 #include <iostream>
@@ -14,10 +15,11 @@
 class EEG
 {
 private:
+	OGLGraph* graphObj;
 	static EEG* _instance;
 	bool applyBandpassFilter = true;
 
-	std::list<float> _listSignals;
+	std::list<float> _listSignals, _signalForDisplay;
 
 	float channelGainsEEG = 100;
 	float lowpassCutoffFrequency = 5, highpassCutoffFrequency = 40, previousSignal = 0, previousFilteredSignal_lp = 0, previousFilteredSignal_hp = 0;
