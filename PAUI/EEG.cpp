@@ -33,18 +33,17 @@ void EEG::processEEGSignal(BITalino::VFrame frame)
 		previousSignal = i == 0 ? 0 : signal;	*/
 
 		_listSignals.push_back(F);
+		if (nbrOfInputSamples == _listSignals.size())
+		{
+			calculatePSD();
+			for (int i = 0; i < frameLength; i++)
+				_listSignals.pop_front();
+		}
 	}
-	if (nbrOfInputSamples == _listSignals.size())
-	{
-		calculatePSD();
-		for (int i = 0; i < frameLength; i++)
-			_listSignals.pop_front();
-	}
-
 }
 
 // HR, RRI, Delta Mean, and Delta Standard deviation calculation from File
-void EEG::processEEGSignal(double frame[])
+void EEG::processEEGSignal(float frame[])
 {
 	#if DISPLAY_GRAPH == 1
 		graphObj = OGLGraph::Instance();
@@ -107,11 +106,11 @@ void EEG::processEEGSignal(double frame[])
 // fftw linking instructions from http://stackoverflow.com/a/42137837
 int EEG::calculatePSD()
 {
-	double* x;
-	double* y;
-	x = new double[nbrOfOutputSamples];
-	y = new double[nbrOfOutputSamples];
-	double yMin = DBL_MAX, yMax = DBL_MIN;
+	float* x;
+	float* y;
+	x = new float[nbrOfOutputSamples];
+	y = new float[nbrOfOutputSamples];
+	float yMin = DBL_MAX, yMax = DBL_MIN;
 
 	double *in = (double*)fftw_malloc(sizeof(double) * nbrOfInputSamples);
 	fftw_complex *out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * nbrOfOutputSamples);
@@ -125,9 +124,9 @@ int EEG::calculatePSD()
 	// Perform the FFT
 	fftw_execute(p);
 
-	double realVal, imagVal, powVal, absVal, frequency;
-	double frequencyDomainStep = ((double)samplingFrequency / (double)nbrOfInputSamples);
-	double bands[6][2];
+	float realVal, imagVal, powVal, absVal, frequency;
+	float frequencyDomainStep = ((float)samplingFrequency / (float)nbrOfInputSamples);
+	float bands[6][2];
 	delta = 0; theta = 0; alpha = 0; beta = 0; gamma = 0;
 
 	int framesCount = 0;
@@ -165,7 +164,7 @@ int EEG::calculatePSD()
 		if (frequency <= 61.0)
 		{
 			framesCount = idx;
-			x[idx] = (double)frequency;
+			x[idx] = (float)frequency;
 			y[idx] = powVal;
 			if (powVal < yMin)
 				yMin = powVal;
@@ -186,9 +185,9 @@ int EEG::calculatePSD()
 	bands[4][0] = 'g';
 	bands[4][1] = gamma;
 	bands[5][0] = 'E';		// Engagement Level
-	bands[5][1] = beta * (alpha + theta);
+	bands[5][1] = beta / (alpha + theta);
 
-	engagement = beta * (alpha + theta);
+	engagement = beta / (alpha + theta);
 
 	//printf("D: %0.4lf\t T: %0.4lf\t A: %0.4lf B: %0.4lf\t G: %0.4lf\t O: %0.4lf\n\n", delta, theta, alpha, beta, gamma, otherF);
 	// Clean up
@@ -207,10 +206,10 @@ int EEG::calculatePSD()
 //void EEG::testPSD()
 //{
 //	int outSam = ceil(255 / 2.0);
-//	double* x;
-//	double* y;
-//	x = new double[outSam];
-//	y = new double[outSam];
+//	float* x;
+//	float* y;
+//	x = new float[outSam];
+//	y = new float[outSam];
 //
 //	int N = 256;
 //	float Fs = 200;//sampling frequency
@@ -218,11 +217,11 @@ int EEG::calculatePSD()
 //	float f = 20;//frequency
 //
 //	float t[255];//time vector 
-//	double signal[255];
+//	float signal[255];
 //	float yMin = FLT_MAX, yMax = FLT_MIN;
 //	
-//	double realVal, imagVal, powVal, absVal, frequency;
-//	double frequencyDomainStep = ((double)Fs / (double)255);
+//	float realVal, imagVal, powVal, absVal, frequency;
+//	float frequencyDomainStep = ((float)Fs / (float)255);
 //	int framesCount = 0;
 //
 //	for (int i = 0; i < N - 1; i++)
@@ -252,7 +251,7 @@ int EEG::calculatePSD()
 //		if (frequency <= 101.0)
 //		{
 //			framesCount = i;
-//			x[i] = (double)frequency;
+//			x[i] = (float)frequency;
 //			y[i] = powVal;
 //			if (powVal < yMin)
 //				yMin = powVal;
@@ -269,12 +268,12 @@ int EEG::calculatePSD()
 //
 //}
 
-//void EEG::draw(double X[], double Y[], double maxX, int framesCount, double yMin, double yMax, double bands[][2], int bandSize)
+//void EEG::draw(float X[], float Y[], float maxX, int framesCount, float yMin, float yMax, float bands[][2], int bandSize)
 //{
 //	yMin -= 5.2;
 //	yMax += 0.2;
 //	int i, ic;
-//	double step, x;
+//	float step, x;
 //	Dislin g;
 //
 //	step = maxX / (framesCount - 1);

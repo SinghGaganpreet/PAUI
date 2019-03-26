@@ -35,7 +35,6 @@ int CAM::processCAM(int argsc, char ** argsv, bool displayCam, char* fileToWrite
 	std::cerr << "Hit ESCAPE key to exit app.." << endl;
 	shared_ptr<FrameDetector> frameDetector;
 
-	draw_display = displayCam;
 
 	try {
 
@@ -53,12 +52,14 @@ int CAM::processCAM(int argsc, char ** argsv, bool displayCam, char* fileToWrite
 			("pfps", po::value< int >(&process_framerate)->default_value(30), "Processing framerate.")
 			("cfps", po::value< int >(&camera_framerate)->default_value(30), "Camera capture framerate.")
 			("bufferLen", po::value< int >(&buffer_length)->default_value(30), "process buffer size.")
-			("cid", po::value< int >(&camera_id)->default_value(0), "Camera ID.")
+			("cid", po::value< int >(&camera_id)->default_value(1), "Camera ID.")
 			("faceMode", po::value< int >(&faceDetectorMode)->default_value((int)FaceDetectorMode::LARGE_FACES), "Face detector mode (large faces vs small faces).")
 			("numFaces", po::value< unsigned int >(&nFaces)->default_value(1), "Number of faces to be tracked.")
 			("draw", po::value< bool >(&draw_display)->default_value(true), "Draw metrics on screen.")
 			;
 		po::variables_map args;
+		//draw_display = displayCam;
+
 		try
 		{
 			po::store(po::command_line_parser(argsc, argsv).options(description).run(), args);
@@ -170,7 +171,18 @@ int CAM::processCAM(int argsc, char ** argsv, bool displayCam, char* fileToWrite
 
 				_frame = frame;
 				_faces = faces;
+				/*string faceEmo = std::to_string(faces[0].appearance.age) + "; " + std::to_string(faces[0].emotions.anger)
+					+ "; " + std::to_string(faces[0].emotions.contempt) + "; " + std::to_string(faces[0].emotions.disgust) + "; " + std::to_string(faces[0].emotions.engagement)
+					+ ";" + std::to_string(faces[0].emotions.fear) + ";" + std::to_string(faces[0].emotions.joy) + ";" + std::to_string(faces[0].emotions.sadness) + ";" + std::to_string(faces[0].emotions.surprise) + ";" + std::to_string(faces[0].emotions.valence)
+					+ ";" + std::to_string(faces[0].expressions.attention) + ";" + std::to_string(faces[0].expressions.browFurrow) + ";" + std::to_string(faces[0].expressions.browRaise) + ";" + std::to_string(faces[0].expressions.cheekRaise)
+					+ ";" + std::to_string(faces[0].expressions.chinRaise) + ";" + std::to_string(faces[0].expressions.dimpler) + ";" + std::to_string(faces[0].expressions.eyeClosure) + ";" + std::to_string(faces[0].expressions.eyeWiden)
+					+ ";" + std::to_string(faces[0].expressions.innerBrowRaise) + ";" + std::to_string(faces[0].expressions.jawDrop) + ";" + std::to_string(faces[0].expressions.lidTighten) + ";" + std::to_string(faces[0].expressions.lipCornerDepressor)
+					+ ";" + std::to_string(faces[0].expressions.lipPress) + ";" + std::to_string(faces[0].expressions.lipPucker) + ";" + std::to_string(faces[0].expressions.lipStretch) + ";" + std::to_string(faces[0].expressions.lipSuck)
+					+ ";" + std::to_string(faces[0].expressions.mouthOpen) + ";" + std::to_string(faces[0].expressions.noseWrinkle) + ";" + std::to_string(faces[0].expressions.smile) + ";" + std::to_string(faces[0].expressions.smirk)
+					+ ";" + std::to_string(faces[0].expressions.upperLipRaise) + ";" + std::to_string(faces[0].measurements.orientation.pitch) + ";" + std::to_string(faces[0].measurements.orientation.roll)
+					+ ";" + std::to_string(faces[0].measurements.orientation.yaw) + ";" + std::to_string(faces[0].id) + "\n";
 
+				cout << faceEmo << endl;*/
 				// Draw metrics to the GUI
 				if (draw_display)
 				{
@@ -195,10 +207,10 @@ int CAM::processCAM(int argsc, char ** argsv, bool displayCam, char* fileToWrite
 					}
 				}
 
-				std::cerr << "timestamp: " << frame.getTimestamp()
+				/*std::cerr << "timestamp: " << frame.getTimestamp()
 					<< " cfps: " << listenPtr->getCaptureFrameRate()
 					<< " pfps: " << listenPtr->getProcessingFrameRate()
-					<< " faces: " << faces.size() << endl;
+					<< " faces: " << faces.size() << endl;*/
 
 				//Output metrics to the file
 				//listenPtr->outputToFile(faces, frame.getTimestamp());

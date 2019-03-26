@@ -330,7 +330,6 @@ void OGLGraph::drawECG(std::list<float> _data2, std::list<float> _thresh, std::l
 	}
 	glEnd();
 
-#if DISPLAY_GRAPH_FULL == 1
 	cntX = 0;
 	// Draw the moving average values
 	glEnable(GL_LINE_STIPPLE);
@@ -356,6 +355,7 @@ void OGLGraph::drawECG(std::list<float> _data2, std::list<float> _thresh, std::l
 	}
 	glEnd();
 
+#if DISPLAY_GRAPH_FULL == 1
 	// Draw the HR from ECG.cpp
 	cntX = 0;
 	glBegin(GL_LINE_STRIP);

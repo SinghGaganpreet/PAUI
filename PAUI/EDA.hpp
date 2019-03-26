@@ -23,14 +23,15 @@ private:
 	float sum				= 0;
 	float movingAverage		= 0;
 	float m_peakTimer		= 0;
+	float displayThreshold	= 0;
 
 public:
-	float _SCR = 0.0, _SD = 0.0, _SCL = 0.0;
+	float _SD = 0.0, _SCL = 0.0;
+	float _SCR = 0.0;
 
-	float displayThreshold = 0;
 	static EDA* Instance();
 	void processEDASignal(BITalino::VFrame);
-	void processEDASignal(double frame[]);
+	void processEDASignal(float frame[]);
 };
 
 #endif

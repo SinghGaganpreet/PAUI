@@ -38,7 +38,7 @@ void EMG::processEMGSignal(BITalino::VFrame frame)
 	firstTime = false;	
 }
 
-void EMG::processEMGSignal(double frame[])
+void EMG::processEMGSignal(float frame[])
 {
 	#if DISPLAY_GRAPH == 1
 		graphObj = OGLGraph::Instance();

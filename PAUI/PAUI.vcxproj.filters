@@ -95,5 +95,8 @@
     <ClCompile Include="EMG.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UDP.hpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

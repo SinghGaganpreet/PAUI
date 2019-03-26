@@ -16,7 +16,6 @@
 #pragma comment (lib, "Tobii.EyeX.Client.lib")
 
 
-static float CURRENT_X = 0, CURRENT_Y = 0;
 // ID of the global interactor that provides our data stream; must be unique within the application.
 static const TX_STRING InteractorId = "Rainbow Dash";
 
@@ -128,26 +127,25 @@ void OnFixationDataEvent(TX_HANDLE hFixationDataBehavior)
 	if (txGetFixationDataEventParams(hFixationDataBehavior, &eventParams) == TX_RESULT_OK) {
 		eventType = eventParams.EventType;
 
-		eventDescription = (eventType == TX_FIXATIONDATAEVENTTYPE_DATA) ? "Data" 
+		eventDescription = (eventType == TX_FIXATIONDATAEVENTTYPE_DATA) ? "Data"
 			: ((eventType == TX_FIXATIONDATAEVENTTYPE_END) ? "End"
-			: "Begin");
+				: "Begin");
 
-#if Get_Fixation_Count == 1
 		fixationBegins = (eventDescription == "Begin") ? true : fixationBegins;
-		if (eventDescription == "End" && (eventParams.X < preX-5 || eventParams.X > preX+5 || eventParams.Y < preY-5 || eventParams.Y > preY+5))
+		if (eventDescription == "End" && (eventParams.X < preX - 5 || eventParams.X > preX + 5 || eventParams.Y < preY - 5 || eventParams.Y > preY + 5))
 		{
-			fixationBegins	= false;
+			fixationBegins = false;
 		}
 		if (fixationBegins)
 		{
 			if (firstFixationValue)
 			{
-				startTime			= eventParams.Timestamp;
-				firstFixationValue	= false;
+				startTime = eventParams.Timestamp;
+				firstFixationValue = false;
 			}
 			xSum += std::isnan(eventParams.X) ? 0.0 : eventParams.X;
 			ySum += std::isnan(eventParams.Y) ? 0.0 : eventParams.Y;
-			
+
 			timeInMS += 1;	// it is actually counter that count timestams of a fixation, it may be different from eventparam.Timestamp because frequency of Tobii is 70Hz 
 			//printf("Fixation at X: %f, \tY: %f \t For: %f sec\n", eventParams.X, eventParams.Y, ((float)timeInMS / 1000));
 			/*if (eventParams.X < xSF)
@@ -162,19 +160,19 @@ void OnFixationDataEvent(TX_HANDLE hFixationDataBehavior)
 		else
 		{
 			//timeInMS			= eventParams.Timestamp - startTime;
-			fixationDuration	= eventParams.Timestamp - startTime; //timeInMS;
-			float xAvg			= (xSum / timeInMS); 
-			float yAvg			= (ySum / timeInMS);
-			id					= to_string((int)xAvg) + "_" + to_string((int)yAvg);
-			afterThis			= to_string((int)eventParams.X) + "_" + to_string((int)eventParams.Y);
-			
-			if(xAvg >= 0 && xAvg <= SCREEN_WIDTH && yAvg >= 0 && yAvg <= SCREEN_HEIGHT)
-		 		fdcObj1->updateFixationMap(id, startTime, fixationDuration, afterThis);
+			fixationDuration = eventParams.Timestamp - startTime; //timeInMS;
+			float xAvg = (xSum / timeInMS);
+			float yAvg = (ySum / timeInMS);
+			id = to_string((int)xAvg) + "_" + to_string((int)yAvg);
+			afterThis = to_string((int)eventParams.X) + "_" + to_string((int)eventParams.Y);
 
-			firstFixationValue	= true;
-			timeInMS			= 0;
-			xSum				= 0;
-			ySum				= 0;
+			if (xAvg >= 0 && xAvg <= SCREEN_WIDTH && yAvg >= 0 && yAvg <= SCREEN_HEIGHT)
+				fdcObj1->updateFixationMap(id, startTime, fixationDuration, afterThis);
+
+			firstFixationValue = true;
+			timeInMS = 0;
+			xSum = 0;
+			ySum = 0;
 
 			//if (xSF != FLT_MAX && ySF != FLT_MAX && xLF != FLT_MIN && yLF != FLT_MIN)
 			//{
@@ -199,38 +197,11 @@ void OnFixationDataEvent(TX_HANDLE hFixationDataBehavior)
 		preX = eventParams.X;
 		preY = eventParams.Y;
 
-#else
-		float widthPortion = SCREEN_WIDTH / 3;
-		float heightPortion = SCREEN_HEIGHT / 3;
 		CURRENT_X = eventParams.X;
 		CURRENT_Y = eventParams.Y;
 
-		if (CURRENT_X > 0 && CURRENT_X <= widthPortion && CURRENT_Y > 0 && CURRENT_Y <= heightPortion)
-			printf("\nYou are at Upper Left portion of Screen!\n");
-		else if (CURRENT_X > widthPortion && CURRENT_X <= widthPortion * 2 && CURRENT_Y > 0 && CURRENT_Y <= heightPortion)
-			printf("\nYou are at Upper Middle portion of Screen!\n");
-		else if (CURRENT_X > widthPortion * 2 && CURRENT_X <= SCREEN_WIDTH && CURRENT_Y > 0 && CURRENT_Y <= heightPortion)
-			printf("\nYou are at Upper Right portion of Screen!\n");
-
-		else if (CURRENT_X > 0 && CURRENT_X <= widthPortion && CURRENT_Y > heightPortion && CURRENT_Y <= heightPortion * 2)
-			printf("\nYou are at Middle Left portion of Screen!\n");
-		else if (CURRENT_X > widthPortion && CURRENT_X <= widthPortion * 2 && CURRENT_Y > heightPortion && CURRENT_Y <= heightPortion * 2)
-			printf("\nYou are at Center portion of Screen!\n");
-		else if (CURRENT_X > widthPortion * 2 && CURRENT_X <= SCREEN_WIDTH && CURRENT_Y > heightPortion && CURRENT_Y <= heightPortion * 2)
-			printf("\nYou are at Middle Right portion of Screen!\n");
-
-		else if (CURRENT_X > 0 && CURRENT_X <= widthPortion && CURRENT_Y > heightPortion * 2 && CURRENT_Y <= SCREEN_HEIGHT)
-			printf("\nYou are at Lower Left portion of Screen!\n");
-		else if (CURRENT_X > widthPortion && CURRENT_X <= widthPortion * 2 && CURRENT_Y > heightPortion * 2 && CURRENT_Y <= SCREEN_HEIGHT)
-			printf("\nYou are at Lower Middle portion of Screen!\n");
-		else if (CURRENT_X > widthPortion * 2 && CURRENT_X <= SCREEN_WIDTH && CURRENT_Y > heightPortion * 2 && CURRENT_Y <= SCREEN_HEIGHT)
-			printf("\nYou are at Lower Right portion of Screen!\n");
-
-		else
-			printf("Fixation %s: (%.1f, %.1f) timestamp %.0f ms\n", eventDescription, eventParams.X, eventParams.Y, eventParams.Timestamp);
-#endif
-
-	} else {
+	}
+	else {
 		printf("Failed to interpret fixation data event packet.\n");
 	}
 }

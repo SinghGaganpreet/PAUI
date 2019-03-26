@@ -15,33 +15,32 @@ private:
 	int samplingFrequency = 1000;
 	bool m_peakFlag = false, applyBandpassFilter = false;
 
-	double channelGainsECG = 100;
-	double lowpassCutoffFrequency = 5, highpassCutoffFrequency = 40, previousSignal = 0, previousFilteredSignal_lp = 0, previousFilteredSignal_hp = 0;
-	double m_maximum, m_peakThreshold = 0, m_peakTimer = 0, m_heartRates[100], currentHR = 0, m_pi = 3.14159265358979f, scale = 3;
+	float channelGainsECG = 100;
+	float lowpassCutoffFrequency = 10, highpassCutoffFrequency = 40, previousSignal = 0, previousFilteredSignal_lp = 0, previousFilteredSignal_hp = 0;
+	float m_maximum, m_peakThreshold = 0, m_peakTimer = 0, m_heartRates[100], currentHR = 0, m_pi = 3.14159265358979f, scale = 3;
 
-	int arrayLengthRRI = 16, frameLengthCounter = 0, frequencyRRILimit = 23;
+	int frameLengthCounter = 0;
+	const int arrayLengthRRI = 16, frequencyRRILimit = 23;
 	
 	int _rriFound = 0;
 
-	std::list<double> arrayRRIForTimeDomain, arrayRRIForFrequencyDomain;
+	std::list<float> arrayRRIForTimeDomain, arrayRRIForFrequencyDomain;
 	std::list<float> _data2, _thresh, _rriFoundList, _hrList, _rriList, _sdnnList, _rmssdList, _lfList, _hfList, _svbList;
-	double _preRRI = 0;
+	float _preRRI = 0, _RRI = 0.0, _mean = 0.0, _deltaMean = 0.0, _deltaSD = 0.0; //-- delta items are used for calculations on 2 successive RRI
+	float displayThreshold = 0;
 
 public:
 	// ECG Data
-	double _RRI = 0.0, _RMSSD = 0.0, _heartRate = 0.0;
-	double _mean = 0.0, _SDNN = 0.0, _deltaMean = 0.0, _deltaSD = 0.0; //-- delta items are used for calculations on 2 successive RRI
-	double _LF = 0.0, _HF = 0.0, _VLF = 0.0;
+	float  _RMSSD = 0.0, _heartRate = 0.0, _SDNN = 0.0, _LF = 0.0, _HF = 0.0, _VLF = 0.0;
 
-	float displayThreshold = 0;
 	static ECG* Instance();
 	void processECGSignal(BITalino::VFrame);
-	void processECGSignal(double frame[]);
+	void processECGSignal(float frame[]);
 	inline void ECGTimeDomain();
 	inline void ECGFrequencyDomain();
-	inline void processingBlock(double F, double signal, int i);
+	inline void processingBlock(float F, float signal, int i);
 	inline void finalizingThings();
-	inline double applyBandPassFilter(double signal, int i);
+	inline float applyBandPassFilter(float signal, int i);
 };
 
 #endif

@@ -20,9 +20,9 @@ void ECG::processECGSignal(BITalino::VFrame frame)
 	#endif
 	for (int i = 0; i < frame.size(); i++)
 	{
-		double signal = (float)frame[i].analog[ECG_INDEX];
+		float signal = (float)frame[i].analog[ECG_INDEX];
 		signal = (signal - 50) * scale / channelGainsECG;
-		double F = signal;
+		float F = signal;
 
 		if (applyBandpassFilter)
 			F = applyBandPassFilter(signal, i);
@@ -38,7 +38,7 @@ void ECG::processECGSignal(BITalino::VFrame frame)
 }
 
 // HR, RRI, Delta Mean, and Delta Standard deviation calculation from File
-void ECG::processECGSignal(double frame[])
+void ECG::processECGSignal(float frame[])
 {
 	#if DISPLAY_GRAPH == 1
 		graphObj = OGLGraph::Instance();
@@ -46,13 +46,13 @@ void ECG::processECGSignal(double frame[])
 	int j = 20;
 	for (int i = 0; i < frameLength; i++)
 	{
-		double signal = frame[i];
+		float signal = frame[i];
 
 		//graphObj->update((float)signal);	// Display graph
 
 		signal = (signal - 50) * scale / channelGainsECG;
 		//signal = (signal * (3.3 / 1024) - (3.3 / 2)) / 1100;
-		double F = signal;
+		float F = signal;
 		
 		if (applyBandpassFilter)
 			F = applyBandPassFilter(signal, i);
@@ -110,10 +110,10 @@ void ECG::processECGSignal(double frame[])
 }
 
 //----ECG Processing blocks----//
-inline double ECG::applyBandPassFilter(double signal, int i)
+inline float ECG::applyBandPassFilter(float signal, int i)
 {
-	double F = signal;
-	double alpha_hp = samplingFrequency / (2 * m_pi * highpassCutoffFrequency + samplingFrequency);
+	float F = signal;
+	float alpha_hp = samplingFrequency / (2 * m_pi * highpassCutoffFrequency + samplingFrequency);
 	F = i == 0 ? 0 : alpha_hp * (previousFilteredSignal_hp + signal - previousSignal);
 	previousFilteredSignal_hp = F;
 
@@ -124,15 +124,16 @@ inline double ECG::applyBandPassFilter(double signal, int i)
 	return F;
 }
 
-inline void ECG::processingBlock(double F, double signal, int i)
+inline void ECG::processingBlock(float F, float signal, int i)
 {
+	bool m_peakFlag = false;
 	if (F > m_maximum)
 		m_maximum = F;
 
-	m_peakThreshold = m_maximum * 0.8f;	// 0.7f
+	m_peakThreshold = m_maximum * 0.8f;	// 0.7f o
 
-	if (F < m_peakThreshold && m_peakTimer > 1.5f)
-		m_maximum -= 0.01f;
+	if (F < m_peakThreshold && m_peakTimer > 1.5f)	//1.5f n
+		m_maximum -= 0.01f;	// 0.01f n		
 
 	if (F > m_peakThreshold * 1.1f && !m_peakFlag && m_peakTimer > 0.240)	// Previously 1.1f 1.3
 	{
@@ -142,7 +143,7 @@ inline void ECG::processingBlock(double F, double signal, int i)
 		_RRI = m_peakTimer;
 
 		_deltaMean = (_preRRI + _RRI) / 2;
-		double preSD = (_preRRI - _mean) * (_preRRI - _mean);
+		float preSD = (_preRRI - _mean) * (_preRRI - _mean);
 		_deltaSD = std::sqrt(((_preRRI - _mean) * (_preRRI - _mean)) + ((_RRI - _mean) * (_RRI - _mean)));
 
 		//-------------------------//
@@ -157,7 +158,7 @@ inline void ECG::processingBlock(double F, double signal, int i)
 		if (arrayRRIForFrequencyDomain.size() == frequencyRRILimit)
 		{
 			ECGFrequencyDomain();
-			std::list<double>::const_iterator it = arrayRRIForFrequencyDomain.begin();
+			std::list<float>::const_iterator it = arrayRRIForFrequencyDomain.begin();
 			frameLengthCounter -= *it * 1000;
 			arrayRRIForFrequencyDomain.pop_front();
 		}
@@ -179,7 +180,7 @@ inline void ECG::processingBlock(double F, double signal, int i)
 		m_peakFlag = false;
 
 
-	m_peakTimer += 1.0f / (double)samplingFrequency;
+	m_peakTimer += 1.0f / (float)samplingFrequency;
 	previousSignal = i == 0 ? 0 : signal;
 
 	frameLengthCounter++;
@@ -187,7 +188,7 @@ inline void ECG::processingBlock(double F, double signal, int i)
 
 inline void ECG::finalizingThings()
 {	
-	double sum = 0;
+	float sum = 0;
 	for (int w = 0; w < frameLength; w++)
 		sum += m_heartRates[w];
 
@@ -213,12 +214,12 @@ inline void ECG::finalizingThings()
 // Calculating RMSSD, SDNN, and mean
 void ECG::ECGTimeDomain()
 {
-	double squaredSumRRI = 0, sumRRI = 0, squaredSumOfSD = 0;
+	float squaredSumRRI = 0, sumRRI = 0, squaredSumOfSD = 0;
 
-	std::list<double>::const_iterator it;
+	std::list<float>::const_iterator it;
 
 	bool firstRead = false;
-	double previousRRI = 0;
+	float previousRRI = 0;
 	for (it = arrayRRIForTimeDomain.begin(); it != arrayRRIForTimeDomain.end(); it++)
 	{
 		if (!firstRead)
@@ -273,7 +274,7 @@ void ECG::ECGFrequencyDomain()
 
 		//It is sampling frequency (SF) / data points for FFT (DP)
 		//In case of Bitalino SF = 1000 and DP = 15000, DP can vary depending upon the output frequency to measure
-		float frequencyDomainFactor = ((double)samplingFrequency / (double)frameLengthCounter);
+		float frequencyDomainFactor = ((float)samplingFrequency / (float)frameLengthCounter);
 
 		for (idx = 0; idx < outputSamples; idx++)
 		{

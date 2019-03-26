@@ -19,8 +19,10 @@
 #include <iterator>
 #include <cmath>
 #include <conio.h>
+#include <string>
 
 #include <thread>	// for multi threading
+#include <mutex>
 #include <chrono>
 
 #include "EYE.h"
@@ -49,17 +51,18 @@ ifstream myfile;
 BITalino dev;
 
 static int frameCounter = 0;
-static float emgRatio = 96.0;
+//static float emgRatio = 96.0;
 int gwECG, gwEMG, gwEEG, gwEDA;
 char ftwb[100];
 
 bool errorDisplayed = false;	// Stop displaying end of file error after displaying once
 bool doProcessing	= true;
 
-double ecgfromFile[frameLength];
-double emgfromFile[frameLength];
-double eegfromFile[frameLength];
-double edafromFile[frameLength];
+float ecgfromFile[frameLength];
+float emgfromFile[frameLength];
+float eegfromFile[frameLength];
+float edafromFile[frameLength];
+string camfromFile;
 
 // ###################################################################### //
 // ################# Initialization fuction for objects ################# //
@@ -110,6 +113,11 @@ inline void split(const std::string &s, char delim, Out result) {
 	}
 }
 
+int lineRead = 0;
+int averageCam = 0;
+float camData[33];
+mutex mtx;
+
 inline std::string readFile()
 {
 	while (frameCounter < frameLength)
@@ -121,25 +129,39 @@ inline std::string readFile()
 		{
 			if (getline(myfile, line))
 			{
+				lineRead++;
 				if (line.substr(0, 1) == "#")
 					continue;
-
+				//printf("------------------------------------------------------------------------------ %d \n", lineRead);
 				split(line, splitWith, std::back_inserter(elems));
 
-#if PROCESS_ECG == 1
-				ecgfromFile[frameCounter] = stof(elems[ECG_INDEX]);
-#endif //  PROCESS_ECG == 1
-#if  PROCESS_EMG == 1
-				emgfromFile[frameCounter] = stof(elems[EMG_INDEX]);
-#endif //  PROCESS_EMG == 1
-#if PROCESS_EEG == 1
-				eegfromFile[frameCounter] = stof(elems[EEG_INDEX]);
-#endif //  PROCESS_EEG == 1
-#if PROCESS_EDA == 1
-				edafromFile[frameCounter] = stof(elems[EDA_INDEX]);
-#endif //  PROCESS_EDA == 1
-				frameCounter++;
+				#if PROCESS_ECG == 1
+					ecgfromFile[frameCounter] = stof(elems[ECG_INDEX]);
+				#endif //  PROCESS_ECG == 1
+				#if  PROCESS_EMG == 1
+					emgfromFile[frameCounter] = stof(elems[EMG_INDEX]);
+				#endif //  PROCESS_EMG == 1
+				#if PROCESS_EEG == 1
+					eegfromFile[frameCounter] = stof(elems[EEG_INDEX]);
+				#endif //  PROCESS_EEG == 1
+				#if PROCESS_EDA == 1
+					edafromFile[frameCounter] = stof(elems[EDA_INDEX]);
+				#endif //  PROCESS_EDA == 1
 
+				#if CAM_FROM_FILE == 1
+					//mtx.lock();
+					camfromFile = "";
+					for (int i = 0; i < 33; i++)
+					{
+						camData[i] = averageCam == 0 ? stof(elems[i + 14]) : (camData[i] + stof(elems[i + 14]));
+						camfromFile += to_string(camData[i] / averageCam) + ";";
+					}
+					//mtx.unlock();					
+					averageCam++;
+
+				#endif // CAM_FROM_FILE == 1
+
+				frameCounter++;
 			}
 			else
 				return "Finish";
@@ -167,45 +189,55 @@ void insertData()
 {
 	while (doProcessing)
 	{
+		//mtx.lock();
 		//ECG
 		#if PROCESS_ECG == 1
 			dbcObj->addECG(*ecgObj);
 		#endif
-			// EMG
+		// EMG
 		#if  PROCESS_EMG == 1
 			dbcObj->addEMG(*emgObj);
-			emgRatio += 96;
-			if (!emgObj->peakStart)
-			{
-				emgObj->numOfPeaks = 0;
-				emgObj->numOfPlains = 0;
-				emgObj->totalPlainTime = 0;
-				emgObj->totalPeakTime = 0;
-				emgObj->maxPeakMagnitude = 0;
-				emgObj->currentpeakMag = 0;
-				emgRatio = 96;
-		}
+			//emgRatio += 96;
+			//if (!emgObj->peakStart)
+			//{
+			//	emgObj->numOfPeaks = 0;
+			//	/*emgObj->numOfPlains = 0;
+			//	emgObj->totalPlainTime = 0;
+			//	emgObj->totalPeakTime = 0;
+			//	emgObj->maxPeakMagnitude = 0;
+			//	emgObj->currentpeakMag = 0;*/
+			//	emgRatio = 96;
+			//}
 		#endif	
-			// EEG
+		// EEG
 		#if PROCESS_EEG == 1
 			dbcObj->addEEG(*eegObj);
 		#endif
-			// EEG
+		// EEG
 		#if PROCESS_EDA == 1
 			dbcObj->addEDA(*edaObj);
 		#endif
-			// EYE
+		// EYE
 		#if TOBII == 1
 			dbcObj->addEYE(*fdcObj);
 		#endif 
-			// CAM
+		// CAM
 		#if CAMERA == 1
 			dbcObj->addCAM(*camObj);
 		#endif 
+		#if CAM_FROM_FILE == 1
+			if (averageCam >= 3000)
+			{
+				dbcObj->addCAM(camfromFile);
+				averageCam = 0;
+			}	
+		#endif
 
-			dbcObj->insertDBM();
+		dbcObj->insertDBM(lineRead);
 
 		std::this_thread::sleep_for(std::chrono::microseconds(processingFreq));	// Sleep for 500 micro Sec to run this thread at 2000Hz
+		//mtx.unlock();
+		
 	}
 }
 
@@ -308,18 +340,18 @@ void pBitalino(void)   // Bitalino processing block
 
 		//#############Commenting the procesing of Bialino objects for now to collect data at faster rate for initial testing. 
 		//############Will do the processing at offline mode########################
-		//#if  PROCESS_EMG == 1
-		//	emgObj->processEMGSignal(f);
-		//#endif //  PROCESS_EMG == 1
-		//#if PROCESS_ECG == 1
-		//	ecgObj->processECGSignal(f);
-		//#endif // PROCESS_ECG == 1
-		//#if PROCESS_EEG == 1
-		//	eegObj->processEEGSignal(f);
-		//#endif // PROCESS_EEG == 1
-		//#if PROCESS_EDA == 1
-		//	edaObj->processEDASignal(f);
-		//#endif // PROCESS_EDA == 1
+		#if  PROCESS_EMG == 1
+			emgObj->processEMGSignal(f);
+		#endif //  PROCESS_EMG == 1
+		#if PROCESS_ECG == 1
+			ecgObj->processECGSignal(f);
+		#endif // PROCESS_ECG == 1
+		#if PROCESS_EEG == 1
+			eegObj->processEEGSignal(f);
+		#endif // PROCESS_EEG == 1
+		#if PROCESS_EDA == 1
+			edaObj->processEDASignal(f);
+		#endif // PROCESS_EDA == 1
 
 		#if RECORD_BITALINO == 1
 			for (int i = 0; i < f.size(); i++)

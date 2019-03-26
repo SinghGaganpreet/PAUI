@@ -26,6 +26,7 @@ void EDA::processEDASignal(BITalino::VFrame frame)
 			frameCounter++;
 			movingAverage = sum / frameCounter;
 			_sclList.push_back(movingAverage);
+			_listSignal.push_back(signal);
 		}
 		else
 		{
@@ -44,7 +45,9 @@ void EDA::processEDASignal(BITalino::VFrame frame)
 		if (signal > movingAverage * 1.5f)
 		{
 			_SCR = signal;
-			_SD = _SCR - movingAverage;
+			_SCL = movingAverage;
+			_SD  = _SCR - _SCL;
+
 			m_peakTimer = 0;
 		}
 		m_peakTimer += 1.0f / (float)samplingFrequency;
@@ -54,7 +57,7 @@ void EDA::processEDASignal(BITalino::VFrame frame)
 }
 
 // HR, RRI, Delta Mean, and Delta Standard deviation calculation from File
-void EDA::processEDASignal(double frame[])
+void EDA::processEDASignal(float frame[])
 {
 	#if DISPLAY_GRAPH == 1
 		graphObj = OGLGraph::Instance();

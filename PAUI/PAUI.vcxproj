@@ -188,6 +188,7 @@
     <ClCompile Include="OGLGraph.cpp" />
     <ClCompile Include="PAUI.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="UDP.hpp" />
     <ClCompile Include="WriteToFile.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

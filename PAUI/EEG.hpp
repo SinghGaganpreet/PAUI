@@ -26,18 +26,18 @@ private:
 	float  m_pi = 3.14159265358979f;
 	int nbrOfInputSamples = 3001;
 	int nbrOfOutputSamples = ceil(nbrOfInputSamples / 2.0);
+	float displayThreshold = 0;
 
 public:
-	float displayThreshold = 0;
 	// EEG Data 
-	double delta = 0.0, theta = 0.0, alpha = 0.0, beta = 0.0, gamma = 0.0, engagement = 0.0;
+	float delta = 0.0, theta = 0.0, alpha = 0.0, beta = 0.0, gamma = 0.0, engagement = 0.0;
 
 	static EEG* Instance();
 	void processEEGSignal(BITalino::VFrame);
-	void processEEGSignal(double frame[]);
+	void processEEGSignal(float frame[]);
 	int calculatePSD();
-	void draw(double[], double[], double, int, double, double, double[][2] = {}, int = 0);
-	void testPSD();
+	//void draw(double[], double[], double, int, double, double, double[][2] = {}, int = 0);
+	//void testPSD();
 };
 
 #endif
